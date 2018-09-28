@@ -3,6 +3,7 @@
 .project
 .settings
 /target/
+NeuroWorkspace.xml
 
 ### STS ###
 .apt_generated
