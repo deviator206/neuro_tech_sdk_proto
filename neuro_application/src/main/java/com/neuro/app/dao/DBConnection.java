@@ -161,7 +161,7 @@ public final class DBConnection {
 					innerMap.add(fileName);
 
 				}
-				if (fileName != null) {
+				if (fileName != null && fileBlob != null) {
 					byte[] imgbytes = fileBlob.getBytes(1, (int) fileBlob.length());
 					Buffer buffer = ByteBuffer.wrap(imgbytes);
 					innerMap.add(buffer);
@@ -172,8 +172,9 @@ public final class DBConnection {
 				}
 				// print the results
 				System.out.format("%s, %s\n", subjectid, fileName);
-
-				imageFileMap.put(fileName, innerMap);
+				if (fileName != null) {
+					imageFileMap.put(fileName, innerMap);
+				}
 			}
 
 		} catch (SQLException e) {
@@ -541,20 +542,19 @@ public final class DBConnection {
 
 	}
 
-	public void insertAttendanceInHistoryInDB(CameraType cameraType, String matchedId,  Timestamp timeStampType,
+	public void insertAttendanceInHistoryInDB(CameraType cameraType, String matchedId, Timestamp timeStampType,
 			Timestamp timestamp) {
 
 		try {
 
-			preparedStatement = connection
-					.prepareStatement("insert into history (cameratype, name, timein, timeout,timestamp) "
-							+ "values(?,?,?,?,?)");
+			preparedStatement = connection.prepareStatement(
+					"insert into history (cameratype, name, timein, timeout,timestamp) " + "values(?,?,?,?,?)");
 			preparedStatement.setString(1, cameraType.toString());
 			preparedStatement.setString(2, matchedId);
-			if(cameraType.toString().equalsIgnoreCase("OUT")) {
+			if (cameraType.toString().equalsIgnoreCase("OUT")) {
 				preparedStatement.setTimestamp(3, null);
 				preparedStatement.setTimestamp(4, timeStampType);
-			}else {
+			} else {
 				preparedStatement.setTimestamp(3, timeStampType);
 				preparedStatement.setTimestamp(4, null);
 			}
@@ -575,6 +575,40 @@ public final class DBConnection {
 
 		}
 
+	}
+
+	public boolean checkUserAuthentication(String username, String password) {
+		boolean userAvailable = false;
+		String name = null;
+		try {
+			String query = "SELECT username FROM logindetails where username='" + username + "' and password='"
+					+ password + "' and role='USER';";
+			System.out.println(query);
+			// create the statement
+			statement = connection.createStatement();
+
+			// execute the query, and get a resultset
+			ResultSet rs = statement.executeQuery(query);
+
+			// iterate through the resultset
+			while (rs.next()) {
+				name = rs.getString("username");
+				System.out.println("Logged IN User :: " + name);
+				userAvailable = true;
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: - " + e);
+		} finally {
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("SQLException Finally: - " + e);
+			}
+
+		}
+		return userAvailable;
 	}
 
 }

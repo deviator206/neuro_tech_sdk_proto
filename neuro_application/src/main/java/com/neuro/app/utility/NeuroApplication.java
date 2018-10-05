@@ -1,4 +1,4 @@
-package com.neuro.app;
+package com.neuro.app.utility;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -59,7 +59,7 @@ public final class NeuroApplication implements ChangeListener {
 	// Private constructor
 	// ===========================================================
 
-	private NeuroApplication() throws Exception {
+	public NeuroApplication() throws Exception {
 
 		LibraryManager.initLibraryPath();
 
@@ -76,7 +76,7 @@ public final class NeuroApplication implements ChangeListener {
 					frame.setExtendedState(frame.MAXIMIZED_BOTH);
 					frame.setResizable(true);
 					frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-					frame.setTitle("Neuro Demo Application For Face Recognition");
+					frame.setTitle("Inside Out");
 					frame.setIconImage(Utils.createIconImage("images/logo.png"));
 
 					tabbedPane = new JTabbedPane();
@@ -91,15 +91,34 @@ public final class NeuroApplication implements ChangeListener {
 						}
 					});
 					frame.setLocationRelativeTo(null);
-					frame.setVisible(true);
-					
+					setCurrentFrame(frame);
+
 				} catch (Throwable e) {
 					showError(null, e);
 				}
 			}
 		});
-		
+
 	}
+
+	private JFrame frame;
+	
+	
+
+	private JFrame getCurrentFrame() {
+		return frame;
+	}
+
+	public void setVisibility(boolean visibility) {
+		JFrame frame = getCurrentFrame();
+		frame.setVisible(visibility);
+	}
+
+	private void setCurrentFrame(JFrame frame) {
+		this.frame = frame;
+	}
+	
+	
 
 	// ===========================================================
 	// Private methods

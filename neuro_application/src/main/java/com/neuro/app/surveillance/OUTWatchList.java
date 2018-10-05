@@ -203,8 +203,8 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
 						dbService.saveInsideOutInfoToDB(matchedId, score, 18, "", 1,
 								dbService.getDeviceType(PANEL_TITLE));
-						dbService.saveTheNotification(Roles.ADMIN, "SurveillanceApp", "Identified", matchedId,
-								NotificationStatus.VISIBLE, timeStampOut);
+//						dbService.saveTheNotification(Roles.ADMIN, "SurveillanceApp", "Identified", matchedId,
+//								NotificationStatus.VISIBLE, timeStampOut);
 						dbService.markAttendanceInHistory(CameraType.OUT, matchedId, timeStampOut, timestamp);
 
 					} catch (Exception e) {

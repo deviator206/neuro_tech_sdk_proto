@@ -97,7 +97,7 @@ public final class LicensingPanel extends JPanel {
 			lblStatus.setFont(new Font(lblStatus.getFont().getName(), Font.PLAIN, 11));
 			lblStatus.setBorder(BorderFactory.createEmptyBorder(BORDER_WIDTH_TOP, BORDER_WIDTH_LEFT,
 					BORDER_WIDTH_BOTTOM, BORDER_WIDTH_RIGHT));
-			setComponentObtainingStatus(false);
+//			setComponentObtainingStatus(false);
 			this.add(lblStatus, BorderLayout.PAGE_END);
 		}
 	}
@@ -160,7 +160,7 @@ public final class LicensingPanel extends JPanel {
 			result.append(", ").append(getOptionalComponentsString(componentName));
 		}
 		result.append("</html");
-		lblRequiredComponentLicensesList.setText(result.toString());
+//		lblRequiredComponentLicensesList.setText(result.toString());
 	}
 
 	// ===========================================================
@@ -170,13 +170,13 @@ public final class LicensingPanel extends JPanel {
 	public void setRequiredComponents(List<String> components, String componentName) {
 		requiredComponents.clear();
 		requiredComponents.addAll(components);
-		updateList(componentName);
+//		updateList(componentName);
 	}
 
 	public void setOptionalComponents(List<String> components, String componentName) {
 		optionalComponents.clear();
 		optionalComponents.addAll(components);
-		updateList(componentName);
+//		updateList(componentName);
 	}
 
 	public void setComponentObtainingStatus(boolean succeeded) {

@@ -93,4 +93,8 @@ public class DBService {
 
 	}
 
+	public boolean checkUserAuthentication(String username, String password) {
+		return instance.checkUserAuthentication(username, password);
+	}
+
 }
