@@ -11,6 +11,8 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
+import com.neuro.app.util.Utils;
+
 /**
  *
  * @author RoXen
@@ -55,7 +57,7 @@ public class SpalshScreen extends javax.swing.JFrame {
         jPanel1.setPreferredSize(d);
 //        jPanel1.setBackground(new java.awt.Color(21, 25, 28));
         jPanel1.setLayout(new GridBagLayout());
-
+        setIconImage(Utils.createIconImage("images/logo.png"));
         jLabel_insideout.setFont(new java.awt.Font("Trebuchet MS", 1, 48)); // NOI18N
 //        jLabel_SoftZyd.setForeground(new java.awt.Color(169, 224, 49));
         jLabel_insideout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/logo.png"))); // NOI18N
