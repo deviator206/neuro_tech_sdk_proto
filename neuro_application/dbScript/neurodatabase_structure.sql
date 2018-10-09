@@ -98,9 +98,8 @@ CREATE TABLE `insideoutinfo` (
   `islive` int(11) NOT NULL,
   `type` varchar(255) NOT NULL,
   `timestamp` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-   UNIQUE KEY `subjectid_UNIQUE` (`subjectid`)
-) ENGINE=InnoDB AUTO_INCREMENT=851 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=851 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -167,7 +166,7 @@ CREATE TABLE `subjectinfo` (
   `subject_img` longblob NOT NULL,
   `type` varchar(255) NOT NULL,
   PRIMARY KEY (`img_id`),
-   UNIQUE KEY `subject_title_UNIQUE` (`subject_title`)
+  
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -203,7 +202,7 @@ CREATE TABLE `user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `gender` varchar(45) NOT NULL,
-  `dob` timestamp NOT NULL,
+  `dob` date NOT NULL,
   `phone` varchar(45) NOT NULL,
   `email` varchar(45) NOT NULL,
   `empid` int(11) NOT NULL,
@@ -213,6 +212,7 @@ CREATE TABLE `user` (
   `pictemplate` longblob,
   `picname` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `phone_UNIQUE` (`phone`),
   UNIQUE KEY `email_UNIQUE` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
