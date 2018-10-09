@@ -32,9 +32,7 @@ import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 
-import com.neuro.app.util.CameraType;
 import com.neuro.app.util.NotificationStatus;
-import com.neuro.app.util.Roles;
 import com.neurotec.devices.NDeviceType;
 import com.neurotec.images.NImage;
 
@@ -399,7 +397,7 @@ public final class DBConnection {
 	public String checkIfSubjectPresentInfoInDB(String picname, String type) {
 		String dbSubjectid = null;
 		try {
-			String query = "SELECT name FROM unidentifiedperson where picname='" + picname + "';";
+			String query = "SELECT name FROM unidentifiedperson where picname='" + picname + "' AND type='" + type + "' ;";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();
@@ -478,15 +476,16 @@ public final class DBConnection {
 			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
 			if (!imageFileMap.containsKey(subjectId)) {
 				preparedStatement = connection.prepareStatement(
-						"insert into unidentifiedperson (name, picurl,pictemplate,approve,purpose,picname,timestamp) "
-								+ "values(?,?,?,?,?,?,?)");
+						"insert into unidentifiedperson (name, picurl,pictemplate,approve,purpose,picname,type,timestamp) "
+								+ "values(?,?,?,?,?,?,?,?)");
 				preparedStatement.setString(1, subjectId);
 				preparedStatement.setString(2, "null");
 				preparedStatement.setBinaryStream(3, (InputStream) inputStream);
 				preparedStatement.setString(4, "unIdentified");
 				preparedStatement.setString(5, "null");
 				preparedStatement.setString(6, subjectId);
-				preparedStatement.setTimestamp(7, timeStamp);
+				preparedStatement.setString(7, deviceType);
+				preparedStatement.setTimestamp(8, timeStamp);
 				preparedStatement.executeUpdate();
 			}
 
@@ -615,7 +614,6 @@ public final class DBConnection {
 	public String getUniqueUnMatchedIdFromDB() {
 
 		String availableUsername = null;
-		String name = null;
 		try {
 			String query = "SELECT name FROM unidentifiedperson where id=(Select Max(id) from unidentifiedperson);";
 			System.out.println(query);
@@ -718,12 +716,7 @@ public final class DBConnection {
 	
 	
 	}
-	private static String getFileExtension(File file) {
-        String fileName = file.getName();
-        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
-        return fileName.substring(fileName.lastIndexOf(".")+1);
-        else return "";
-    }
+	
 
 	public void insertSubjectInfoInDB(String subjectId, NImage image, String string, Timestamp timeStamp) {
 

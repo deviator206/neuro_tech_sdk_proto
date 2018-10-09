@@ -165,8 +165,7 @@ CREATE TABLE `subjectinfo` (
   `subject_title` varchar(45) NOT NULL,
   `subject_img` longblob NOT NULL,
   `type` varchar(255) NOT NULL,
-  PRIMARY KEY (`img_id`),
-  
+  PRIMARY KEY (`img_id`)  
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -185,9 +184,9 @@ CREATE TABLE `unidentifiedperson` (
   `approve` varchar(255) NOT NULL,
   `purpose` varchar(255) NOT NULL,
   `picname` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL,
   `timestamp` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name_UNIQUE` (`name`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

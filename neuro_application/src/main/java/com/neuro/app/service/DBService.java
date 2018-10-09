@@ -5,17 +5,11 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.TreeMap;
 
 import com.neuro.app.dao.DBConnection;
-import com.neuro.app.surveillance.SurveillanceTools;
-import com.neuro.app.util.CameraType;
 import com.neuro.app.util.NotificationStatus;
-import com.neuro.app.util.Roles;
-import com.neurotec.devices.NDevice;
 import com.neurotec.images.NImage;
 
 public class DBService {
@@ -35,20 +29,6 @@ public class DBService {
 		System.out.println("HashMap after sorting by keys in ascending order ");
 		return sorted;
 	}
-
-	/*@SuppressWarnings("rawtypes")
-	public void saveDevicesInDB() throws Exception {
-		List<String> deviceDBList = instance.getDevicesFromDB();
-		HashMap<String, EnumSet> deviceList = new HashMap<String, EnumSet>();
-		for (NDevice device : SurveillanceTools.getInstance().getSurveillance().getDeviceManager().getDevices()) {
-			if (device.getDisplayName() != null && !deviceDBList.contains(device.getDisplayName())) {
-				deviceList.put(device.getDisplayName(), device.getDeviceType());
-			}
-		}
-		if (!deviceList.isEmpty()) {
-			instance.saveDeviceInDB(deviceList);
-		}
-	}*/
 
 	public void saveInsideOutInfoToDB(String subjectId, int score, int age, String gender, int isLive,
 			String deviceType) throws Exception {
