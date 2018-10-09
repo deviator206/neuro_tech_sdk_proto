@@ -30,21 +30,28 @@ import com.neurotec.io.NBuffer;
 
 public class WatchListBioDataService {
 
-	private NBiometricClient biometricClient;
-	
+	private NBiometricClient biometricClient = null;
+
 	public WatchListBioDataService(String storeName) {
 		// set connection to Mysql database using SDK
-				biometricClient = new NBiometricClient();
-				biometricClient.setDatabaseConnectionToOdbc("Dsn=neurotechnology;UID=root;PWD=passw0rd", storeName);
-				biometricClient.setFacesLivenessMode(NLivenessMode.PASSIVE_AND_ACTIVE);
-				biometricClient.setFacesDetectAllFeaturePoints(true);
-				biometricClient.setFacesDetectBaseFeaturePoints(true);
-				biometricClient.setFacesRecognizeExpression(true);
-				biometricClient.setFacesDetectProperties(true);
-				biometricClient.setFacesDetermineGender(true);
-				biometricClient.setFacesDetermineAge(true);
+		if (biometricClient == null) {
+			biometricClient = new NBiometricClient();
+			biometricClient.setDatabaseConnectionToOdbc("Dsn=neurotechnology;UID=root;PWD=passw0rd", storeName);
+			biometricClient.setFacesLivenessMode(NLivenessMode.PASSIVE_AND_ACTIVE);
+			biometricClient.setFacesDetectAllFeaturePoints(true);
+			biometricClient.setFacesDetectBaseFeaturePoints(true);
+			biometricClient.setFacesRecognizeExpression(true);
+			biometricClient.setFacesDetectProperties(true);
+			biometricClient.setFacesDetermineGender(true);
+			biometricClient.setFacesDetermineAge(true);
+
+			setBiometricClient(biometricClient);
+		}
 	}
-	
+
+	public WatchListBioDataService() {
+	}
+
 	public void addUnknownSubjectToDb(String unMatchedId, NImage image) throws Throwable {
 		NSubject subject = null;
 		NBiometricTask task = null;
@@ -70,9 +77,8 @@ public class WatchListBioDataService {
 
 		}
 	}
-	
-	
-	public void addWatchSubject(JTable tableResults, DBService dbService) throws Throwable {
+
+	public void addWatchSubject(JTable tableResults, DBService dbService, String panelType) throws Throwable {
 
 		TreeMap<String, ArrayList<Object>> sorted = dbService.getImageList("user");
 
@@ -80,7 +86,6 @@ public class WatchListBioDataService {
 		for (Entry<String, ArrayList<Object>> mapping : sorted.entrySet()) {
 			try {
 				System.out.println(mapping.getKey() + " ==> " + mapping.getValue());
-//				if (mapping.getValue().get(2).equals("OUT")) {
 				final NSubject subject = new NSubject();
 				NFace face = new NFace();
 				face.setImage(NImage.fromMemory((ByteBuffer) mapping.getValue().get(1)));
@@ -92,7 +97,11 @@ public class WatchListBioDataService {
 				if (status == NBiometricStatus.OK) {
 					NBuffer template = subject.getTemplateBuffer();
 					try {
-						SurveillanceTools.getInstance().getSurveillance().addTemplate(id, template);
+						if (panelType.equalsIgnoreCase("IN")) {
+							INSurveillanceTools.getInstance().getSurveillance().addTemplate(id, template);
+						} else if (panelType.equalsIgnoreCase("OUT")) {
+							SurveillanceTools.getInstance().getSurveillance().addTemplate(id, template);
+						}
 						if (!idsList.contains(id)) {
 							SwingUtilities.invokeLater(new Runnable() {
 
@@ -119,6 +128,7 @@ public class WatchListBioDataService {
 						}
 					} finally {
 						template.dispose();
+
 					}
 
 					if ((tableResults.getModel().getRowCount() != 0)) {
@@ -134,14 +144,15 @@ public class WatchListBioDataService {
 			}
 		}
 	}
-	
-	public void checkForUpdatesInWatchlist(final JTable tableResults, final DBService dbService) {
+
+	public void checkForUpdatesInWatchlist(final JTable tableResults, final DBService dbService,
+			final String panelType) {
 		// New timer which works!
 		int delay = 300000; // milliseconds
 		ActionListener loadSubjectFromDBtaskPerformer = new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				try {
-					addWatchSubject(tableResults, dbService);
+					addWatchSubject(tableResults, dbService, panelType);
 				} catch (Throwable e) {
 					e.printStackTrace();
 				}
@@ -154,9 +165,17 @@ public class WatchListBioDataService {
 		INSurveillanceTools.getInstance().getSurveillance().removeAllTemplates();
 		((DefaultTableModel) tableResults.getModel()).setRowCount(0);
 	}
-	
+
 	public void resetParameters() {
 		biometricClient.reset();
+	}
+
+	public NBiometricClient getBiometricClient() {
+		return biometricClient;
+	}
+
+	public void setBiometricClient(NBiometricClient biometricClient) {
+		this.biometricClient = biometricClient;
 	}
 
 }

@@ -399,7 +399,7 @@ public final class DBConnection {
 	public String checkIfSubjectPresentInfoInDB(String picname, String type) {
 		String dbSubjectid = null;
 		try {
-			String query = "SELECT name FROM subjectinfo where picname='" + picname + "';";
+			String query = "SELECT name FROM unidentifiedperson where picname='" + picname + "';";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();
@@ -652,7 +652,7 @@ public final class DBConnection {
 		String age  = null;
 		String gender = null;
 		try {
-			String query = "SELECT age, gender FROM user where name='"+subjectId+"';";
+			String query = "SELECT get_age(dob, NOW()) AS age, gender FROM user where name='"+subjectId+"';";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();
@@ -689,7 +689,7 @@ public final class DBConnection {
 
 		String cameraType  = null;
 		try {
-			String query = "SELECT type FROM user where name='"+cameraName+"';";
+			String query = "SELECT type FROM camera where name='"+cameraName+"';";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();

@@ -170,7 +170,6 @@ public final class INWatchList extends BasePanel implements ActionListener {
 
 				final NImage image = details.getFace().getImage();
 				imageNew = image;
-				String unMatchedId = null;
 				NSEDMatchResult bestMatch = null;
 				final Date date = (Date) details.getTimeStamp();
 				matches = details.getBestMatches();
@@ -198,18 +197,58 @@ public final class INWatchList extends BasePanel implements ActionListener {
 					try {
 						Timestamp timeStampIn = dbService.getTimestamp(new Date(date.getTime()));
 						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
+
+						String type = getCameraType();
+
 						String ageAndGender = dbService.getAgeOfUser(matchedId);
 						int age = Integer.parseInt(ageAndGender.split("-")[0]);
 						String gender = ageAndGender.split("-")[1];
-						dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1,
-								getCameraType());
-						dbService.markAttendanceInHistory(getCameraType(), matchedId, timestamp, timeStampIn);
+						dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						dbService.markAttendanceInHistory(type, matchedId, timestamp, timeStampIn);
 
 					} catch (Exception e) {
 						System.out.println("SQLException: - " + e);
 						e.printStackTrace();
 					}
 
+				}else {
+
+
+					String unMatchedId = null;
+					String subjectId = null;
+					String type = null;
+					System.out.println(unMatchedId);
+					try {
+						Timestamp timeStampIn = dbService.getTimestamp(new Date(details.getTimeStamp().getTime()));
+						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
+						type = getCameraType();
+
+						subjectId = dbService.getUniqueUnMatchedIdFromDB();
+						if (subjectId == null) {
+							unMatchedId = "anonymous0" + unknownID + ".png";
+						} else {
+							unMatchedId = subjectId;
+						}
+						watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
+
+						dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
+						dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type, timeStampIn);
+						dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified",
+								unMatchedId + "," + type, NotificationStatus.HIDDEN, timeStampIn);
+						dbService.markAttendanceInHistory(type, unMatchedId, timestamp, timeStampIn);
+						unknownID++;
+						if ((iTableResults.getModel().getRowCount() != 0)) {
+							iTableResults.repaint();
+						}
+						((DefaultTableModel) iTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 });
+					} catch (Exception e) {
+						System.out.println("SQLException: - " + e);
+						e.printStackTrace();
+					} catch (Throwable e) {
+						e.printStackTrace();
+					}
+//					view.removeSubject(details.getTraceIndex());
+				
 				}
 
 				details.dispose();
@@ -225,10 +264,12 @@ public final class INWatchList extends BasePanel implements ActionListener {
 
 				String unMatchedId = null;
 				String subjectId = null;
+				String type = null;
 				System.out.println(unMatchedId);
 				try {
 					Timestamp timeStampIn = dbService.getTimestamp(new Date(details.getTimeStamp().getTime()));
 					Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
+					type = getCameraType();
 
 					subjectId = dbService.getUniqueUnMatchedIdFromDB();
 					if (subjectId == null) {
@@ -237,14 +278,12 @@ public final class INWatchList extends BasePanel implements ActionListener {
 						unMatchedId = subjectId;
 					}
 					watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
-					
-					dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1,
-							getCameraType());
-					dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew,
-							getCameraType(),timeStampIn);
-					dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified", unMatchedId,
-							NotificationStatus.HIDDEN, timeStampIn);
-					dbService.markAttendanceInHistory(getCameraType(), unMatchedId, timestamp, timeStampIn);
+
+					dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
+					dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type, timeStampIn);
+					dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified",
+							unMatchedId + "," + type, NotificationStatus.HIDDEN, timeStampIn);
+					dbService.markAttendanceInHistory(type, unMatchedId, timestamp, timeStampIn);
 					unknownID++;
 					if ((iTableResults.getModel().getRowCount() != 0)) {
 						iTableResults.repaint();
@@ -346,10 +385,20 @@ public final class INWatchList extends BasePanel implements ActionListener {
 
 		initGUI();
 		initTab();
+		setJTable(iTableResults);
+//		watchListBioDataService.addWatchSubject(oTableResults, dbService);
+//		watchListBioDataService.checkForUpdatesInWatchlist(oTableResults, dbService);
 
-		watchListBioDataService.addWatchSubject(iTableResults, dbService);
-		watchListBioDataService.checkForUpdatesInWatchlist(iTableResults, dbService);
+	}
 
+	private JTable jTable = null;
+
+	public JTable getJTable() {
+		return jTable;
+	}
+
+	public void setJTable(JTable jTable) {
+		this.jTable = jTable;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -666,13 +715,17 @@ public final class INWatchList extends BasePanel implements ActionListener {
 	public String getCameraType() {
 		NDevice device = (NDevice) comboBoxCameras.getSelectedItem();
 		cameraType = device.getDisplayName();
-		return dbService.getCameraDeviceTypeFromDB(cameraType);
+		String type = dbService.getCameraDeviceTypeFromDB(cameraType);
+		if (type == null) {
+			type = "IN";
+		}
+		return type;
 	}
 
 	public void setCameraType(String cameraType) {
 		this.cameraType = cameraType;
 	}
-	
+
 	@Override
 	protected void updateControls() {
 		boolean busy = INSurveillanceTools.getInstance().getSurveillance().isRunning();
@@ -765,7 +818,7 @@ public final class INWatchList extends BasePanel implements ActionListener {
 					}
 				}
 			} else if (ev.getSource().equals(btnAddSubject)) {
-				watchListBioDataService.addWatchSubject(iTableResults, dbService);
+				// watchListBioDataService.addWatchSubject(iTableResults, dbService);
 			} else if (ev.getSource().equals(btnClearSubjects)) {
 				watchListBioDataService.clearWatchSubjects(iTableResults);
 			}

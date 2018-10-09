@@ -41,18 +41,14 @@ public class Application {
 				screen.loadingnumber.setText(Integer.toString(row) + "%");
 				screen.loadingprogress.setValue(row);
 				if (row == 100) {
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							try {
-								frame.loadNeuroApplication();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-					});
 					screen.setVisible(false);
 					frame.setVisible(true);
 					frame.setFocusable(true);
+					try {
+						frame.loadNeuroApplication();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 
 				}
 			}

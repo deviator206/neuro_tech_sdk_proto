@@ -176,6 +176,8 @@ public final class NeuroApplication implements ChangeListener {
 				}
 			} catch (Exception e) {
 				showError(null, e);
+			} catch (Throwable e) {
+				e.printStackTrace();
 			}
 		}
 	}
