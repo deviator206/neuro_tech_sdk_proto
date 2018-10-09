@@ -35,7 +35,7 @@ public class WatchListBioDataService {
 	public WatchListBioDataService(String storeName) {
 		// set connection to Mysql database using SDK
 				biometricClient = new NBiometricClient();
-				biometricClient.setDatabaseConnectionToOdbc("Dsn=neurotechnology;UID=root;PWD=passw0rd", "outimageStore");
+				biometricClient.setDatabaseConnectionToOdbc("Dsn=neurotechnology;UID=root;PWD=passw0rd", storeName);
 				biometricClient.setFacesLivenessMode(NLivenessMode.PASSIVE_AND_ACTIVE);
 				biometricClient.setFacesDetectAllFeaturePoints(true);
 				biometricClient.setFacesDetectBaseFeaturePoints(true);
