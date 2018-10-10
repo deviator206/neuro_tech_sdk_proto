@@ -5,7 +5,9 @@ import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 
+import com.neurotec.biometrics.client.NBiometricClient;
 import com.neurotec.util.concurrent.AggregateExecutionException;
 
 public abstract class BasePanel extends JPanel {
@@ -100,5 +102,15 @@ public abstract class BasePanel extends JPanel {
 	protected void initTab() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public JTable getJTable() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public NBiometricClient getBiometricClient() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

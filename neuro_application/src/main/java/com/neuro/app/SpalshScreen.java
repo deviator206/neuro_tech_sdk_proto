@@ -6,10 +6,11 @@
 
 package com.neuro.app;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+
+import com.neuro.app.util.Utils;
 
 /**
  *
@@ -55,7 +56,7 @@ public class SpalshScreen extends javax.swing.JFrame {
         jPanel1.setPreferredSize(d);
 //        jPanel1.setBackground(new java.awt.Color(21, 25, 28));
         jPanel1.setLayout(new GridBagLayout());
-
+        setIconImage(Utils.createIconImage("images/logo.png"));
         jLabel_insideout.setFont(new java.awt.Font("Trebuchet MS", 1, 48)); // NOI18N
 //        jLabel_SoftZyd.setForeground(new java.awt.Color(169, 224, 49));
         jLabel_insideout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Images/logo.png"))); // NOI18N
@@ -93,12 +94,6 @@ public class SpalshScreen extends javax.swing.JFrame {
 		gridBagConstraints.gridheight= -1;
 		gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         jPanel1.add(loadingnumber, gridBagConstraints);
-
-      
-//        jLabel_inven1.setFont(new java.awt.Font("Trebuchet MS", 0, 36)); // NOI18N
-//        jLabel_inven1.setForeground(new java.awt.Color(169, 224, 49));
-//        jLabel_inven1.setText("Inventory Management");
-//        jPanel1.add(jLabel_inven1, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 240, 380, 50));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

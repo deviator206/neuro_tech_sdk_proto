@@ -12,7 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
-import com.neuro.app.dao.DBService;
+import com.neuro.app.service.DBService;
 import com.neuro.app.util.Utils;
 import com.neuro.app.utility.NeuroApplication;
 

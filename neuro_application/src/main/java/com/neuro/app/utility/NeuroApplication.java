@@ -16,11 +16,9 @@ import javax.swing.event.ChangeListener;
 
 import com.neuro.app.biometeric.CaptureIcaoCompliantImage;
 import com.neuro.app.biometeric.FaceTools;
-import com.neuro.app.dao.DBConnection;
-import com.neuro.app.dao.DBService;
 import com.neuro.app.helper.LibraryManager;
 import com.neuro.app.surveillance.SurveillanceTools;
-import com.neuro.app.surveillance.WatchListService;
+import com.neuro.app.surveillance.WatchListUI;
 import com.neuro.app.util.BasePanel;
 import com.neurotec.lang.NCore;
 import com.neurotec.samples.util.Utils;
@@ -52,7 +50,7 @@ public final class NeuroApplication implements ChangeListener {
 	// ===========================================================
 
 	private JTabbedPane tabbedPane;
-	private WatchListService panelWatchListService;
+	private WatchListUI panelWatchListService;
 	private BasePanel panelcaptureIcaoCompliantImage;
 
 	// ===========================================================
@@ -131,7 +129,7 @@ public final class NeuroApplication implements ChangeListener {
 		panelcaptureIcaoCompliantImage.init("faces");
 		tabbedPane.addTab(panelcaptureIcaoCompliantImage.getName(), panelcaptureIcaoCompliantImage);
 
-		panelWatchListService = new WatchListService();
+		panelWatchListService = new WatchListUI();
 		tabbedPane.addTab("Watchlist", panelWatchListService.getContentPane());
 
 	}
@@ -178,6 +176,8 @@ public final class NeuroApplication implements ChangeListener {
 				}
 			} catch (Exception e) {
 				showError(null, e);
+			} catch (Throwable e) {
+				e.printStackTrace();
 			}
 		}
 	}

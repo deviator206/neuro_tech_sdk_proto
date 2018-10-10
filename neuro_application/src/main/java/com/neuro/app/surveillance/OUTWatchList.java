@@ -6,20 +6,17 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -47,7 +44,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.neuro.app.dao.DBConnection;
-import com.neuro.app.dao.DBService;
+import com.neuro.app.service.DBService;
+import com.neuro.app.service.WatchListBioDataService;
 import com.neuro.app.util.BasePanel;
 import com.neuro.app.util.CameraType;
 import com.neuro.app.util.ColorTableCellRenderer;
@@ -58,7 +56,6 @@ import com.neurotec.biometrics.NBiometricOperation;
 import com.neurotec.biometrics.NBiometricStatus;
 import com.neurotec.biometrics.NBiometricTask;
 import com.neurotec.biometrics.NFace;
-import com.neurotec.biometrics.NLTemplate;
 import com.neurotec.biometrics.NLivenessMode;
 import com.neurotec.biometrics.NSubject;
 import com.neurotec.biometrics.client.NBiometricClient;
@@ -130,7 +127,7 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 	private JTable oTableResults;
 	private JTextField tfVideo;
 	private int unknownID = 1;
-	private NBiometricClient biometricClient;
+	private WatchListBioDataService watchListBioDataService;
 	private DBService dbService;
 
 	private final NSurveillanceListener imageCapturedListener = new NSurveillanceListener() {
@@ -173,9 +170,9 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 				final NImage image = details.getFace().getImage();
 				imageNew = image;
-				String unMatchedId = null;
+
 				NSEDMatchResult bestMatch = null;
-				final Date date = (Date) details.getTimeStamp();
+				final Date date = new Date(details.getTimeStamp().getTime());
 				matches = details.getBestMatches();
 				final String matchedId;
 				if (matches.isEmpty()) {
@@ -199,18 +196,56 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 						}
 					});
 					try {
+						String type = getCameraType();
 						Timestamp timeStampOut = dbService.getTimestamp(new Date(date.getTime()));
 						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
-						dbService.saveInsideOutInfoToDB(matchedId, score, 18, "", 1,
-								dbService.getDeviceType(PANEL_TITLE));
-//						dbService.saveTheNotification(Roles.ADMIN, "SurveillanceApp", "Identified", matchedId,
-//								NotificationStatus.VISIBLE, timeStampOut);
-						dbService.markAttendanceInHistory(CameraType.OUT, matchedId, timeStampOut, timestamp);
+						String ageAndGender = dbService.getAgeOfUser(matchedId);
+						int age = Integer.parseInt(ageAndGender.split("-")[0]);
+						String gender = ageAndGender.split("-")[1];
+						dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						dbService.markAttendanceInHistory(type, matchedId, timestamp, timeStampOut);
 
 					} catch (Exception e) {
 						System.out.println("SQLException: - " + e);
 						e.printStackTrace();
 					}
+
+				} else {
+					String unMatchedId = null;
+					String subjectId = null;
+					System.out.println(unMatchedId);
+					try {
+						Timestamp timeStampOut = dbService.getTimestamp(new Date(details.getTimeStamp().getTime()));
+						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
+						if (unMatchedId == null) {
+							subjectId = dbService.getUniqueUnMatchedIdFromDB();
+							if (subjectId == null) {
+								unMatchedId = "anonymous0" + unknownID + ".png";
+							} else {
+								unMatchedId = subjectId;
+								subjectId = subjectId.replace("anonymous0", "").replace(".png", "");
+								unknownID = Integer.parseInt(subjectId);
+							}
+						}
+						String type = getCameraType();
+						watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
+						dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
+						dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type, timeStampOut);
+						dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified",
+								unMatchedId + "," + type, NotificationStatus.HIDDEN, timeStampOut);
+						dbService.markAttendanceInHistory(type, unMatchedId, timestamp, timeStampOut);
+						unknownID++;
+						if ((oTableResults.getModel().getRowCount() != 0)) {
+							oTableResults.repaint();
+						}
+						((DefaultTableModel) oTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 });
+					} catch (Exception e) {
+						System.out.println("SQLException: - " + e);
+						e.printStackTrace();
+					} catch (Throwable e) {
+						e.printStackTrace();
+					}
+//					view.removeSubject(details.getTraceIndex());
 
 				}
 
@@ -223,38 +258,32 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 	private final NSurveillanceListener subjectDisappearedListener = new NSurveillanceListener() {
 
 		public void eventOccured(NSurveillanceEvent ev) {
+			String unMatchedId = null;
 			for (NSurveillanceEventDetails details : ev.getEventDetailsArray()) {
-
-				String unMatchedId = null;
-				unMatchedId = "anonymous0" + unknownID + ".png";
-				System.out.println(unMatchedId);
-				try {
-					Timestamp timeStampOut = dbService
-							.getTimestamp(new Date(details.getTimeStamp().getTime()));
-					Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
-
-					addUnknownSubjectToDb(unMatchedId, imageNew);
-					dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1,
-							dbService.getDeviceType(PANEL_TITLE));
-					dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew,
-							dbService.getDeviceType(PANEL_TITLE));
-					dbService.saveTheNotification(Roles.ADMIN, "SurveillanceApp", "UnIdentified", unMatchedId,
-							NotificationStatus.HIDDEN, timeStampOut);
-					dbService.markAttendanceInHistory(CameraType.OUT, unMatchedId, timeStampOut, timestamp);
-					unknownID++;
-					if ((oTableResults.getModel().getRowCount() != 0)) {
-						oTableResults.repaint();
-					}
-					((DefaultTableModel) oTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 });
-				} catch (Exception e) {
-					System.out.println("SQLException: - " + e);
-					e.printStackTrace();
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
-				view.removeSubject(details.getTraceIndex());
-				details.dispose();
-			}
+				/*
+				 * String subjectId = null; System.out.println(unMatchedId); try { Timestamp
+				 * timeStampOut = dbService.getTimestamp(new
+				 * Date(details.getTimeStamp().getTime())); Timestamp timestamp = new
+				 * Timestamp((new java.util.Date()).getTime()); if (unMatchedId == null) {
+				 * subjectId = dbService.getUniqueUnMatchedIdFromDB(); if (subjectId == null) {
+				 * unMatchedId = "anonymous0" + unknownID + ".png"; } else { unMatchedId =
+				 * subjectId; subjectId = subjectId.replace("anonymous0", "").replace(".png",
+				 * ""); unknownID = Integer.parseInt(subjectId); } } else { unMatchedId =
+				 * "anonymous0" + unknownID + ".png"; } String type = getCameraType();
+				 * watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
+				 * dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
+				 * dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type,
+				 * timeStampOut); dbService.saveTheNotification(Roles.ADMIN.name(),
+				 * "SurveillanceApp", "UnIdentified", unMatchedId + "," + type,
+				 * NotificationStatus.HIDDEN, timeStampOut);
+				 * dbService.markAttendanceInHistory(type, unMatchedId, timestamp,
+				 * timeStampOut); unknownID++; if ((oTableResults.getModel().getRowCount() !=
+				 * 0)) { oTableResults.repaint(); } ((DefaultTableModel)
+				 * oTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 }); }
+				 * catch (Exception e) { System.out.println("SQLException: - " + e);
+				 * e.printStackTrace(); } catch (Throwable e) { e.printStackTrace(); }
+				 * view.removeSubject(details.getTraceIndex()); details.dispose();
+				 */}
 		}
 
 	};
@@ -306,31 +335,6 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 	};
 
-	protected void addUnknownSubjectToDb(String unMatchedId, NImage image) throws Throwable {
-		NSubject subject = null;
-		NBiometricTask task = null;
-		try {
-
-			subject = new NSubject();
-			NFace face = new NFace();
-			face.setImage(image);
-			subject.getFaces().add(face);
-			subject.setId(unMatchedId);
-
-			task = biometricClient.createTask(EnumSet.of(NBiometricOperation.ENROLL_WITH_DUPLICATE_CHECK), subject);
-			biometricClient.performTask(task);
-
-			if (task.getStatus() != NBiometricStatus.OK) {
-				System.out.format("addUnknownSubjectToDb :: Identification was unsuccessful. Status: {0}.",
-						task.getStatus());
-				if (task.getError() != null)
-					throw task.getError();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-
-		}
-	}
 	// ===========================================================
 	// Public constructor
 	// ===========================================================
@@ -359,20 +363,28 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 		this.percent = percent;
 
 		// set connection to Mysql database
-		DBConnection.getInstance().connectDataBase();
 		dbService = new DBService();
 
 		// set connection to Mysql database using SDK
-		biometricClient = new NBiometricClient();
-		biometricClient.setDatabaseConnectionToOdbc("Dsn=neurotechnology;UID=root;PWD=passw0rd", "outimageStore");
-		biometricClient.setFacesLivenessMode(NLivenessMode.PASSIVE_AND_ACTIVE);
+		watchListBioDataService = new WatchListBioDataService("outimageStore");
 
 		initGUI();
 		initTab();
 
-		addWatchSubject();
-		checkForUpdatesInWatchlist();
+		setJTable(oTableResults);
+//		watchListBioDataService.addWatchSubject(oTableResults, dbService);
+//		watchListBioDataService.checkForUpdatesInWatchlist(oTableResults, dbService);
 
+	}
+
+	private JTable jTable = null;
+
+	public JTable getJTable() {
+		return jTable;
+	}
+
+	public void setJTable(JTable jTable) {
+		this.jTable = jTable;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -401,11 +413,13 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 					.connectToDevice(connectPanel.getSelectedPlugin(), connectPanel.getParameters());
 			updateCameras();
 			comboBoxCameras.setSelectedItem(newDevice);
-
+//			setCameraType(newDevice.getDisplayName());
+			System.out.println("Selected Camera is :: " + getCameraType());
 			if (comboBoxCameras.getSelectedItem() != newDevice) {
 				if (newDevice != null) {
 					SurveillanceTools.getInstance().getSurveillance().getDeviceManager()
 							.disconnectFromDevice(newDevice);
+
 				}
 
 				JOptionPane.showMessageDialog(this,
@@ -426,89 +440,6 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 			throw new AssertionError("One of the three radio buttons must be selected.");
 		}
 		return new NSurveillanceSource(NSurveillanceTrackingType.FACES, camera);
-	}
-
-	private void addWatchSubject() throws Throwable {
-
-		TreeMap<String, ArrayList<Object>> sorted = dbService.getImageList("user");
-
-		List<String> idsList = null;
-		for (Entry<String, ArrayList<Object>> mapping : sorted.entrySet()) {
-			try {
-				System.out.println(mapping.getKey() + " ==> " + mapping.getValue());
-//				if (mapping.getValue().get(2).equals("OUT")) {
-				final NSubject subject = new NSubject();
-				NFace face = new NFace();
-				face.setImage(NImage.fromMemory((ByteBuffer) mapping.getValue().get(1)));
-				subject.getFaces().add(face);
-				final String id = mapping.getKey();
-				subject.setId(id);
-				idsList = Arrays.asList(biometricClient.listIds());
-				NBiometricStatus status = SurveillanceTools.getInstance().getEngine().createTemplate(subject);
-				if (status == NBiometricStatus.OK) {
-					NBuffer template = subject.getTemplateBuffer();
-					try {
-						SurveillanceTools.getInstance().getSurveillance().addTemplate(id, template);
-						if (!idsList.contains(id)) {
-							SwingUtilities.invokeLater(new Runnable() {
-
-								public void run() {
-
-									NBiometricTask task = biometricClient
-											.createTask(EnumSet.of(NBiometricOperation.ENROLL), subject);
-									biometricClient.performTask(task);
-
-									if (task.getStatus() != NBiometricStatus.OK) {
-										System.out.format(
-												"addWatchSubject :: Identification was unsuccessful. Status: {0}.",
-												task.getStatus());
-										if (task.getError() != null)
-											try {
-												throw task.getError();
-											} catch (Throwable e) {
-												e.printStackTrace();
-											}
-									}
-								}
-
-							});
-						}
-					} finally {
-						template.dispose();
-					}
-
-					if ((oTableResults.getModel().getRowCount() != 0)) {
-						oTableResults.repaint();
-					}
-					((DefaultTableModel) oTableResults.getModel()).addRow(new Object[] { id, 0, null, 0 });
-				} else {
-					System.out.println("Template creation failed: " + status);
-				}
-//				}
-			} catch (Exception e) {
-				System.out.println("Exception: " + e);
-			}
-		}
-	}
-
-	private void clearWatchSubjects() {
-		SurveillanceTools.getInstance().getSurveillance().removeAllTemplates();
-		((DefaultTableModel) oTableResults.getModel()).setRowCount(0);
-	}
-
-	private void checkForUpdatesInWatchlist() {
-		// New timer which works!
-		int delay = 300000; // milliseconds
-		ActionListener loadSubjectFromDBtaskPerformer = new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				try {
-					addWatchSubject();
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
-			}
-		};
-		new Timer(delay, loadSubjectFromDBtaskPerformer).start();
 	}
 
 	private void incrementDetectedCount(String id, Date date) {
@@ -605,7 +536,7 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 		panelTop.setLayout(new BoxLayout(panelTop, BoxLayout.Y_AXIS));
 
-		panelSourceOuter.setBorder(BorderFactory.createTitledBorder("OutWard Source"));
+		panelSourceOuter.setBorder(BorderFactory.createTitledBorder("Source"));
 		panelSourceOuter.setLayout(new FlowLayout(FlowLayout.LEADING));
 
 		GridBagLayout panelSourceLayout = new GridBagLayout();
@@ -657,7 +588,7 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 		panelRight.setLayout(new BorderLayout());
 
-		panelWatchList.setBorder(BorderFactory.createTitledBorder("OutWardWatch list"));
+		panelWatchList.setBorder(BorderFactory.createTitledBorder("Watch list"));
 		panelWatchList.setLayout(new BorderLayout());
 
 		panelWatchListControls.setLayout(new FlowLayout(FlowLayout.LEADING));
@@ -764,6 +695,23 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 	}
 
+	private String cameraType = null;
+
+	public String getCameraType() {
+		NDevice device = (NDevice) comboBoxCameras.getSelectedItem();
+		cameraType = device.getDisplayName();
+		String type = dbService.getCameraDeviceTypeFromDB(cameraType);
+		if (type == null) {
+			type = "OUT";
+		}
+		return type;
+	}
+
+	/*
+	 * public void setCameraType(String cameraType) { this.cameraType = cameraType;
+	 * }
+	 */
+
 	@Override
 	protected void updateControls() {
 		boolean busy = SurveillanceTools.getInstance().getSurveillance().isRunning();
@@ -857,9 +805,9 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 					}
 				}
 			} else if (ev.getSource().equals(btnAddSubject)) {
-				addWatchSubject();
+				// watchListBioDataService.addWatchSubject(oTableResults, dbService);
 			} else if (ev.getSource().equals(btnClearSubjects)) {
-				clearWatchSubjects();
+				watchListBioDataService.clearWatchSubjects(oTableResults);
 			}
 			updateControls();
 		} catch (Exception e) {
@@ -883,10 +831,6 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 		int w = d.width * percent / 100;
 		int h = percent;
 		return new Dimension(w, h);
-	}
-
-	public void resetParameters() {
-		biometricClient.reset();
 	}
 
 }

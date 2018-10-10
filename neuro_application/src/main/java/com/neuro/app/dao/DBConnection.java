@@ -32,9 +32,7 @@ import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 
-import com.neuro.app.util.CameraType;
 import com.neuro.app.util.NotificationStatus;
-import com.neuro.app.util.Roles;
 import com.neurotec.devices.NDeviceType;
 import com.neurotec.images.NImage;
 
@@ -159,8 +157,8 @@ public final class DBConnection {
 					fileBlob = rs.getBlob("pictemplate");
 //					type = rs.getString("type");
 					innerMap.add(fileName);
-
 				}
+
 				if (fileName != null && fileBlob != null) {
 					byte[] imgbytes = fileBlob.getBytes(1, (int) fileBlob.length());
 					Buffer buffer = ByteBuffer.wrap(imgbytes);
@@ -396,10 +394,10 @@ public final class DBConnection {
 		return dbResult;
 	}
 
-	public String checkIfSubjectPresentInUserInfoInDB(String picname, String type) {
+	public String checkIfSubjectPresentInfoInDB(String picname, String type) {
 		String dbSubjectid = null;
 		try {
-			String query = "SELECT name FROM user where picname='" + picname + "';";
+			String query = "SELECT name FROM unidentifiedperson where picname='" + picname + "' AND type='" + type + "' ;";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();
@@ -409,7 +407,7 @@ public final class DBConnection {
 
 			// iterate through the resultset
 			while (rs.next()) {
-				dbSubjectid = rs.getString("picname");
+				dbSubjectid = rs.getString("subject_title");
 
 			}
 		} catch (SQLException e) {
@@ -470,7 +468,7 @@ public final class DBConnection {
 		return nowTimestamp;
 	}
 
-	public void insertSubjectInfoForUnknownInDB(String subjectId, NImage image, String deviceType) {
+	public void insertSubjectInfoForUnknownInDB(String subjectId, NImage image, String deviceType,Timestamp timeStamp) {
 
 		try {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -478,14 +476,16 @@ public final class DBConnection {
 			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
 			if (!imageFileMap.containsKey(subjectId)) {
 				preparedStatement = connection.prepareStatement(
-						"insert into unidentifiedperson (name, picurl,pictemplate,approve,purpose,picname) "
-								+ "values(?,?,?,?,?,?)");
+						"insert into unidentifiedperson (name, picurl,pictemplate,approve,purpose,picname,type,timestamp) "
+								+ "values(?,?,?,?,?,?,?,?)");
 				preparedStatement.setString(1, subjectId);
 				preparedStatement.setString(2, "null");
 				preparedStatement.setBinaryStream(3, (InputStream) inputStream);
 				preparedStatement.setString(4, "unIdentified");
 				preparedStatement.setString(5, "null");
 				preparedStatement.setString(6, subjectId);
+				preparedStatement.setString(7, deviceType);
+				preparedStatement.setTimestamp(8, timeStamp);
 				preparedStatement.executeUpdate();
 			}
 
@@ -509,7 +509,7 @@ public final class DBConnection {
 
 	}
 
-	public void insertNotificationInDB(Roles target, String origin, String title, String description,
+	public void insertNotificationInDB(String target, String origin, String title, String description,
 			NotificationStatus status, Timestamp timeStamp) {
 
 		try {
@@ -542,7 +542,7 @@ public final class DBConnection {
 
 	}
 
-	public void insertAttendanceInHistoryInDB(CameraType cameraType, String matchedId, Timestamp timeStampType,
+	public void insertAttendanceInHistoryInDB(String cameraType, String matchedId, Timestamp timeStampType,
 			Timestamp timestamp) {
 
 		try {
@@ -551,7 +551,7 @@ public final class DBConnection {
 					"insert into history (cameratype, name, timein, timeout,timestamp) " + "values(?,?,?,?,?)");
 			preparedStatement.setString(1, cameraType.toString());
 			preparedStatement.setString(2, matchedId);
-			if (cameraType.toString().equalsIgnoreCase("OUT")) {
+			if (cameraType.equalsIgnoreCase("OUT")) {
 				preparedStatement.setTimestamp(3, null);
 				preparedStatement.setTimestamp(4, timeStampType);
 			} else {
@@ -609,6 +609,153 @@ public final class DBConnection {
 
 		}
 		return userAvailable;
+	}
+
+	public String getUniqueUnMatchedIdFromDB() {
+
+		String availableUsername = null;
+		try {
+			String query = "SELECT name FROM unidentifiedperson where id=(Select Max(id) from unidentifiedperson);";
+			System.out.println(query);
+			// create the statement
+			statement = connection.createStatement();
+
+			// execute the query, and get a resultset
+			ResultSet rs = statement.executeQuery(query);
+
+			// iterate through the resultset
+			while (rs.next()) {
+				availableUsername = rs.getString("name");
+				System.out.println("User :: " + availableUsername);
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: - " + e);
+		} finally {
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("SQLException Finally: - " + e);
+			}
+
+		}
+		return availableUsername;
+	
+	}
+
+	public String getUserInfoForAgeInDB(String subjectId) {
+
+
+		String age  = null;
+		String gender = null;
+		try {
+			String query = "SELECT get_age(dob, NOW()) AS age, gender FROM user where name='"+subjectId+"';";
+			System.out.println(query);
+			// create the statement
+			statement = connection.createStatement();
+
+			// execute the query, and get a resultset
+			ResultSet rs = statement.executeQuery(query);
+
+			// iterate through the resultset
+			while (rs.next()) {
+				age = rs.getString("age");
+				gender = rs.getString("gender");
+				System.out.println(subjectId+"s age :: " + age);
+				System.out.println(subjectId+"s gender :: " + gender);
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: - " + e);
+		} finally {
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("SQLException Finally: - " + e);
+			}
+
+		}
+		return age+"-"+gender;
+	
+	
+	}
+
+	public String getUniqueUnMatchedIdFromDB(String cameraName) {
+
+
+		String cameraType  = null;
+		try {
+			String query = "SELECT type FROM camera where name='"+cameraName+"';";
+			System.out.println(query);
+			// create the statement
+			statement = connection.createStatement();
+
+			// execute the query, and get a resultset
+			ResultSet rs = statement.executeQuery(query);
+
+			// iterate through the resultset
+			while (rs.next()) {
+				cameraType = rs.getString("type");
+				System.out.println(cameraName+"s Type :: " + cameraType);
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: - " + e);
+		} finally {
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("SQLException Finally: - " + e);
+			}
+
+		}
+		return cameraType;
+	
+	
+	}
+	
+
+	public void insertSubjectInfoInDB(String subjectId, NImage image, String string, Timestamp timeStamp) {
+
+		try {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			ImageIO.write((RenderedImage) image.toImage(), "png", os);
+			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
+			if (!imageFileMap.containsKey(subjectId)) {
+				preparedStatement = connection.prepareStatement(
+						"insert into unidentifiedperson (name, picurl,pictemplate,approve,purpose,picname,timestamp) "
+								+ "values(?,?,?,?,?,?,?)");
+				preparedStatement.setString(1, subjectId);
+				preparedStatement.setString(2, "null");
+				preparedStatement.setBinaryStream(3, (InputStream) inputStream);
+				preparedStatement.setString(4, "unIdentified");
+				preparedStatement.setString(5, "null");
+				preparedStatement.setString(6, subjectId);
+				preparedStatement.setTimestamp(7, timeStamp);
+				preparedStatement.executeUpdate();
+			}
+
+		} catch (FileNotFoundException e) {
+			System.out.println("FileNotFoundException: - " + e);
+		} catch (SQLException e) {
+			System.out.println("SQLException: - " + e);
+		} catch (IOException e) {
+			System.out.println("IOException: - " + e);
+		} finally {
+
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("SQLException Finally: - " + e);
+			}
+
+		}
+
 	}
 
 }
