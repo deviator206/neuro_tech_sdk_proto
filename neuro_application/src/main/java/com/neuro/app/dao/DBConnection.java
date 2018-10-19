@@ -650,7 +650,7 @@ public final class DBConnection {
 		String age  = null;
 		String gender = null;
 		try {
-			String query = "SELECT get_age(dob, NOW()) AS age, gender FROM user where name='"+subjectId+"';";
+			String query = "SELECT get_age(dob, NOW()) AS age, gender FROM user where picname='"+subjectId+"';";
 			System.out.println(query);
 			// create the statement
 			statement = connection.createStatement();

@@ -93,7 +93,12 @@ public class WatchListBioDataService {
 				final String id = mapping.getKey();
 				subject.setId(id);
 				idsList = Arrays.asList(biometricClient.listIds());
-				NBiometricStatus status = SurveillanceTools.getInstance().getEngine().createTemplate(subject);
+				NBiometricStatus status = null;
+				if (panelType.equalsIgnoreCase("IN")) {
+					status = INSurveillanceTools.getInstance().getEngine().createTemplate(subject);
+				} else if (panelType.equalsIgnoreCase("OUT")) {
+					status = SurveillanceTools.getInstance().getEngine().createTemplate(subject);
+				}
 				if (status == NBiometricStatus.OK) {
 					NBuffer template = subject.getTemplateBuffer();
 					try {
