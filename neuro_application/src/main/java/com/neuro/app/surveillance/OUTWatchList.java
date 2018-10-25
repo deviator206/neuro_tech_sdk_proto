@@ -200,9 +200,11 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 						Timestamp timeStampOut = dbService.getTimestamp(new Date(date.getTime()));
 						Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
 						String ageAndGender = dbService.getAgeOfUser(matchedId);
-						int age = Integer.parseInt(ageAndGender.split("-")[0]);
-						String gender = ageAndGender.split("-")[1];
-						dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						if (ageAndGender != null) {
+							int age = Integer.parseInt(ageAndGender.split("-")[0]);
+							String gender = ageAndGender.split("-")[1];
+							dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						}
 						dbService.markAttendanceInHistory(type, matchedId, timestamp, timeStampOut);
 
 					} catch (Exception e) {
@@ -245,8 +247,6 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 					} catch (Throwable e) {
 						e.printStackTrace();
 					}
-//					view.removeSubject(details.getTraceIndex());
-
 				}
 
 				details.dispose();
@@ -258,32 +258,10 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 	private final NSurveillanceListener subjectDisappearedListener = new NSurveillanceListener() {
 
 		public void eventOccured(NSurveillanceEvent ev) {
-			String unMatchedId = null;
 			for (NSurveillanceEventDetails details : ev.getEventDetailsArray()) {
-				/*
-				 * String subjectId = null; System.out.println(unMatchedId); try { Timestamp
-				 * timeStampOut = dbService.getTimestamp(new
-				 * Date(details.getTimeStamp().getTime())); Timestamp timestamp = new
-				 * Timestamp((new java.util.Date()).getTime()); if (unMatchedId == null) {
-				 * subjectId = dbService.getUniqueUnMatchedIdFromDB(); if (subjectId == null) {
-				 * unMatchedId = "anonymous0" + unknownID + ".png"; } else { unMatchedId =
-				 * subjectId; subjectId = subjectId.replace("anonymous0", "").replace(".png",
-				 * ""); unknownID = Integer.parseInt(subjectId); } } else { unMatchedId =
-				 * "anonymous0" + unknownID + ".png"; } String type = getCameraType();
-				 * watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
-				 * dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
-				 * dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type,
-				 * timeStampOut); dbService.saveTheNotification(Roles.ADMIN.name(),
-				 * "SurveillanceApp", "UnIdentified", unMatchedId + "," + type,
-				 * NotificationStatus.HIDDEN, timeStampOut);
-				 * dbService.markAttendanceInHistory(type, unMatchedId, timestamp,
-				 * timeStampOut); unknownID++; if ((oTableResults.getModel().getRowCount() !=
-				 * 0)) { oTableResults.repaint(); } ((DefaultTableModel)
-				 * oTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 }); }
-				 * catch (Exception e) { System.out.println("SQLException: - " + e);
-				 * e.printStackTrace(); } catch (Throwable e) { e.printStackTrace(); }
-				 * view.removeSubject(details.getTraceIndex()); details.dispose();
-				 */}
+				view.removeSubject(details.getTraceIndex()); 
+				details.dispose();	
+			}
 		}
 
 	};

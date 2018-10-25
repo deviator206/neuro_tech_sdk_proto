@@ -171,7 +171,7 @@ public final class INWatchList extends BasePanel implements ActionListener {
 				final NImage image = details.getFace().getImage();
 				imageNew = image;
 				NSEDMatchResult bestMatch = null;
-				final Date date = (Date) details.getTimeStamp();
+				final Date date = new Date(details.getTimeStamp().getTime());
 				matches = details.getBestMatches();
 				final String matchedId;
 				if (matches.isEmpty()) {
@@ -201,9 +201,11 @@ public final class INWatchList extends BasePanel implements ActionListener {
 						String type = getCameraType();
 
 						String ageAndGender = dbService.getAgeOfUser(matchedId);
-						int age = Integer.parseInt(ageAndGender.split("-")[0]);
-						String gender = ageAndGender.split("-")[1];
-						dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						if (ageAndGender != null) {
+							int age = Integer.parseInt(ageAndGender.split("-")[0]);
+							String gender = ageAndGender.split("-")[1];
+							dbService.saveInsideOutInfoToDB(matchedId, score, age, gender, 1, type);
+						}
 						dbService.markAttendanceInHistory(type, matchedId, timestamp, timeStampIn);
 
 					} catch (Exception e) {
@@ -211,8 +213,7 @@ public final class INWatchList extends BasePanel implements ActionListener {
 						e.printStackTrace();
 					}
 
-				}else {
-
+				} else {
 
 					String unMatchedId = null;
 					String subjectId = null;
@@ -247,8 +248,6 @@ public final class INWatchList extends BasePanel implements ActionListener {
 					} catch (Throwable e) {
 						e.printStackTrace();
 					}
-//					view.removeSubject(details.getTraceIndex());
-				
 				}
 
 				details.dispose();
@@ -261,40 +260,6 @@ public final class INWatchList extends BasePanel implements ActionListener {
 
 		public void eventOccured(NSurveillanceEvent ev) {
 			for (NSurveillanceEventDetails details : ev.getEventDetailsArray()) {
-
-				String unMatchedId = null;
-				String subjectId = null;
-				String type = null;
-				System.out.println(unMatchedId);
-				try {
-					Timestamp timeStampIn = dbService.getTimestamp(new Date(details.getTimeStamp().getTime()));
-					Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
-					type = getCameraType();
-
-					subjectId = dbService.getUniqueUnMatchedIdFromDB();
-					if (subjectId == null) {
-						unMatchedId = "anonymous0" + unknownID + ".png";
-					} else {
-						unMatchedId = subjectId;
-					}
-					watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
-
-					dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
-					dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type, timeStampIn);
-					dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified",
-							unMatchedId + "," + type, NotificationStatus.HIDDEN, timeStampIn);
-					dbService.markAttendanceInHistory(type, unMatchedId, timestamp, timeStampIn);
-					unknownID++;
-					if ((iTableResults.getModel().getRowCount() != 0)) {
-						iTableResults.repaint();
-					}
-					((DefaultTableModel) iTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 });
-				} catch (Exception e) {
-					System.out.println("SQLException: - " + e);
-					e.printStackTrace();
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
 				view.removeSubject(details.getTraceIndex());
 				details.dispose();
 			}
