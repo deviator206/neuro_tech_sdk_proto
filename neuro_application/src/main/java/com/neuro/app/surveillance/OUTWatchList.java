@@ -212,7 +212,7 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 						e.printStackTrace();
 					}
 
-				} else {
+				/*} else {
 					String unMatchedId = null;
 					String subjectId = null;
 					System.out.println(unMatchedId);
@@ -246,7 +246,7 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 						e.printStackTrace();
 					} catch (Throwable e) {
 						e.printStackTrace();
-					}
+					}*/
 				}
 
 				details.dispose();
@@ -259,8 +259,42 @@ public final class OUTWatchList extends BasePanel implements ActionListener {
 
 		public void eventOccured(NSurveillanceEvent ev) {
 			for (NSurveillanceEventDetails details : ev.getEventDetailsArray()) {
-				view.removeSubject(details.getTraceIndex()); 
-				details.dispose();	
+
+				String unMatchedId = null;
+				String subjectId = null;
+				String type = null;
+				System.out.println(unMatchedId);
+				try {
+					Timestamp timeStampIn = dbService.getTimestamp(new Date(details.getTimeStamp().getTime()));
+					Timestamp timestamp = new Timestamp((new java.util.Date()).getTime());
+					type = getCameraType();
+
+					subjectId = dbService.getUniqueUnMatchedIdFromDB();
+					if (subjectId == null) {
+						unMatchedId = "anonymous0" + unknownID + ".png";
+					} else {
+						unMatchedId = subjectId;
+					}
+					watchListBioDataService.addUnknownSubjectToDb(unMatchedId, imageNew);
+
+					dbService.saveInsideOutInfoToDB(unMatchedId, score, 18, "", 1, type);
+					dbService.saveSubjectInfoForUnknownToDB(unMatchedId, imageNew, type, timeStampIn);
+					dbService.saveTheNotification(Roles.ADMIN.name(), "SurveillanceApp", "UnIdentified",
+							unMatchedId + "," + type, NotificationStatus.HIDDEN, timeStampIn);
+					dbService.markAttendanceInHistory(type, unMatchedId, timestamp, timeStampIn);
+					unknownID++;
+					if ((iTableResults.getModel().getRowCount() != 0)) {
+						iTableResults.repaint();
+					}
+					((DefaultTableModel) iTableResults.getModel()).addRow(new Object[] { unMatchedId, 0, null, 0 });
+				} catch (Exception e) {
+					System.out.println("SQLException: - " + e);
+					e.printStackTrace();
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
+				view.removeSubject(details.getTraceIndex());
+				details.dispose();
 			}
 		}
 
